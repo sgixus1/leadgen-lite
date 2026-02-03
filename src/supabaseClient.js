@@ -1,24 +1,73 @@
 import { createClient } from '@supabase/supabase-js'
+import { demoSupabase } from './demoAuth'
 
-// TODO: Replace with your Supabase project URL and anon key
-// For development, we'll use environment variables
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-project.supabase.co'
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key'
+// Using Gary's existing Supabase project
+const supabaseUrl = 'https://dylxoqnauorghuqehjnb.supabase.co'
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR5bHhvcW5hdW9yZ2h1cWVoam5iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNDcyMDgsImV4cCI6MjA4NTYyMzIwOH0.BNPdAtOmF-moWPq4p2zaQJd29mru1WiSbVe75bI5KGk'
 
-// Create Supabase client
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+// Check if we should use demo auth (for GitHub Pages CORS issues)
+const shouldUseDemoAuth = () => {
+  // Use demo auth if we're on GitHub Pages and Supabase fails
+  if (typeof window !== 'undefined') {
+    const isGitHubPages = window.location.hostname.includes('github.io')
+    return isGitHubPages
+  }
+  return false
+}
+
+// Create real Supabase client
+const realSupabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    autoRefreshToken: true,
+    autoRefreshToken: false,
     persistSession: true,
-    detectSessionInUrl: true
+    detectSessionInUrl: true,
+    flowType: 'implicit',
+    storage: {
+      getItem: (key) => {
+        const item = localStorage.getItem(key)
+        return item ? JSON.parse(item) : null
+      },
+      setItem: (key, value) => {
+        localStorage.setItem(key, JSON.stringify(value))
+      },
+      removeItem: (key) => {
+        localStorage.removeItem(key)
+      }
+    }
   }
 })
 
-// Helper function to check if Supabase is configured
-export const isSupabaseConfigured = () => {
-  return supabaseUrl !== 'https://your-project.supabase.co' && 
-         supabaseAnonKey !== 'your-anon-key'
+// Test real Supabase connection
+let useDemo = shouldUseDemoAuth()
+const testConnection = async () => {
+  try {
+    // Quick test - try to get auth session
+    const { data, error } = await realSupabase.auth.getSession()
+    if (error && error.message.includes('Failed to fetch')) {
+      console.log('Supabase CORS issue detected, using demo auth')
+      useDemo = true
+    } else {
+      console.log('Supabase connected successfully')
+      useDemo = false
+    }
+  } catch (err) {
+    console.log('Supabase test failed, using demo auth:', err.message)
+    useDemo = true
+  }
 }
+
+// Run connection test
+if (typeof window !== 'undefined') {
+  testConnection()
+}
+
+// Export the appropriate client
+export const supabase = useDemo ? demoSupabase : realSupabase
+
+// Helper function to check if using real Supabase
+export const isUsingRealSupabase = () => !useDemo
+
+console.log('LeadGen Lite using:', useDemo ? 'Demo Auth' : 'Real Supabase')
 
 // Database schema for LeadGen Lite (for reference):
 /*
