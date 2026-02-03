@@ -1,9 +1,41 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { supabase } from './supabaseClient'
+import Auth from './components/Auth'
+import Dashboard from './components/Dashboard'
 import './App.css'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [session, setSession] = useState(null)
+  const [loading, setLoading] = useState(true)
 
+  useEffect(() => {
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+      setLoading(false)
+    })
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  if (loading) {
+    return (
+      <div style={{ textAlign: 'center', padding: '100px 20px' }}>
+        <div style={{ fontSize: '24px', color: '#666' }}>Loading...</div>
+      </div>
+    )
+  }
+
+  if (session) {
+    return <Dashboard session={session} />
+  }
+
+  // Landing page for non-authenticated users
   return (
     <>
       <div>
@@ -24,17 +56,20 @@ function App() {
           </h2>
           
           <div style={{ marginTop: '40px' }}>
-            <button style={{
-              backgroundColor: '#ff6b6b',
-              color: 'white',
-              padding: '18px 40px',
-              fontSize: '1.2em',
-              border: 'none',
-              borderRadius: '50px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              boxShadow: '0 4px 20px rgba(255,107,107,0.4)'
-            }}>
+            <button 
+              onClick={() => document.getElementById('auth-section')?.scrollIntoView({ behavior: 'smooth' })}
+              style={{
+                backgroundColor: '#ff6b6b',
+                color: 'white',
+                padding: '18px 40px',
+                fontSize: '1.2em',
+                border: 'none',
+                borderRadius: '50px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                boxShadow: '0 4px 20px rgba(255,107,107,0.4)'
+              }}
+            >
               🚀 START YOUR FREE TRIAL - NO CREDIT CARD
             </button>
             <p style={{ marginTop: '15px', opacity: 0.9 }}>
@@ -92,6 +127,7 @@ function App() {
           </div>
         </div>
 
+        {/* Pricing */}
         <div className="card">
           <h3>💰 Affordable Pricing</h3>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', justifyContent: 'center', marginTop: '20px' }}>
@@ -104,7 +140,12 @@ function App() {
                 <li>100 leads/month</li>
                 <li>Community support</li>
               </ul>
-              <button style={{ width: '100%', marginTop: '15px' }}>Start Free</button>
+              <button 
+                onClick={() => document.getElementById('auth-section')?.scrollIntoView({ behavior: 'smooth' })}
+                style={{ width: '100%', marginTop: '15px' }}
+              >
+                Start Free
+              </button>
             </div>
             
             <div style={{ border: '2px solid #007bff', padding: '20px', borderRadius: '10px', width: '250px', backgroundColor: '#f8f9fa' }}>
@@ -120,7 +161,12 @@ function App() {
                 <li>Email sequences</li>
                 <li>Basic analytics</li>
               </ul>
-              <button style={{ width: '100%', marginTop: '15px', backgroundColor: '#007bff', color: 'white' }}>Start 14-Day Trial</button>
+              <button 
+                onClick={() => document.getElementById('auth-section')?.scrollIntoView({ behavior: 'smooth' })}
+                style={{ width: '100%', marginTop: '15px', backgroundColor: '#007bff', color: 'white' }}
+              >
+                Start 14-Day Trial
+              </button>
             </div>
             
             <div style={{ border: '1px solid #ddd', padding: '20px', borderRadius: '10px', width: '250px' }}>
@@ -133,31 +179,23 @@ function App() {
                 <li>API access</li>
                 <li>Priority support</li>
               </ul>
-              <button style={{ width: '100%', marginTop: '15px' }}>Choose Pro</button>
+              <button 
+                onClick={() => document.getElementById('auth-section')?.scrollIntoView({ behavior: 'smooth' })}
+                style={{ width: '100%', marginTop: '15px' }}
+              >
+                Choose Pro
+              </button>
             </div>
           </div>
         </div>
 
-        <div className="card">
-          <h3>✨ Why LeadGen Lite?</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', marginTop: '20px' }}>
-            <div>
-              <h4>💰 Affordable</h4>
-              <p>Starting at $9.99/month - 70% cheaper than competitors</p>
-            </div>
-            <div>
-              <h4>🚀 Easy to Use</h4>
-              <p>Drag & drop builder, no coding required</p>
-            </div>
-            <div>
-              <h4>📈 Proven Templates</h4>
-              <p>High-converting templates for every niche</p>
-            </div>
-            <div>
-              <h4>🔗 Integrations</h4>
-              <p>Connect with your favorite tools</p>
-            </div>
-          </div>
+        {/* Authentication Section */}
+        <div id="auth-section" className="card">
+          <h3>🚀 Ready to Get Started?</h3>
+          <p style={{ fontSize: '1.1em', marginBottom: '30px' }}>
+            Create your account in 30 seconds. No credit card required.
+          </p>
+          <Auth />
         </div>
 
         {/* Testimonials */}
@@ -202,17 +240,20 @@ function App() {
             <span style={{ fontSize: '1.2em', fontWeight: 'bold', color: '#d32f2f' }}>⚡ 47 spots remaining!</span>
           </div>
           <div>
-            <button style={{
-              backgroundColor: '#d32f2f',
-              color: 'white',
-              padding: '20px 50px',
-              fontSize: '1.3em',
-              border: 'none',
-              borderRadius: '10px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              boxShadow: '0 4px 20px rgba(211,47,47,0.4)'
-            }}>
+            <button 
+              onClick={() => document.getElementById('auth-section')?.scrollIntoView({ behavior: 'smooth' })}
+              style={{
+                backgroundColor: '#d32f2f',
+                color: 'white',
+                padding: '20px 50px',
+                fontSize: '1.3em',
+                border: 'none',
+                borderRadius: '10px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                boxShadow: '0 4px 20px rgba(211,47,47,0.4)'
+              }}
+            >
               🔥 CLAIM YOUR 50% DISCOUNT NOW
             </button>
           </div>
@@ -246,17 +287,20 @@ function App() {
           <p style={{ fontSize: '1.2em', margin: '20px 0' }}>
             Join thousands of successful marketers growing their business with LeadGen Lite
           </p>
-          <button style={{
-            backgroundColor: '#007bff',
-            color: 'white',
-            padding: '20px 60px',
-            fontSize: '1.3em',
-            border: 'none',
-            borderRadius: '10px',
-            fontWeight: 'bold',
-            cursor: 'pointer',
-            marginBottom: '20px'
-          }}>
+          <button 
+            onClick={() => document.getElementById('auth-section')?.scrollIntoView({ behavior: 'smooth' })}
+            style={{
+              backgroundColor: '#007bff',
+              color: 'white',
+              padding: '20px 60px',
+              fontSize: '1.3em',
+              border: 'none',
+              borderRadius: '10px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              marginBottom: '20px'
+            }}
+          >
             🚀 START YOUR FREE TRIAL NOW
           </button>
           <p style={{ color: '#666' }}>

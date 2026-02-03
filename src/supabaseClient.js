@@ -1,15 +1,29 @@
 import { createClient } from '@supabase/supabase-js'
 
 // TODO: Replace with your Supabase project URL and anon key
-const supabaseUrl = 'https://your-project.supabase.co'
-const supabaseAnonKey = 'your-anon-key'
+// For development, we'll use environment variables
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-project.supabase.co'
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key'
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Create Supabase client
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true
+  }
+})
 
-// Database schema for LeadGen Lite:
+// Helper function to check if Supabase is configured
+export const isSupabaseConfigured = () => {
+  return supabaseUrl !== 'https://your-project.supabase.co' && 
+         supabaseAnonKey !== 'your-anon-key'
+}
+
+// Database schema for LeadGen Lite (for reference):
 /*
-1. users (handled by Supabase Auth)
-2. subscriptions
+Tables needed:
+1. subscriptions
    - id (uuid)
    - user_id (references auth.users)
    - plan (free|starter|pro|agency)
@@ -18,7 +32,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
    - current_period_start
    - current_period_end
    - created_at
-3. lead_pages
+2. lead_pages
    - id (uuid)
    - user_id
    - title
@@ -30,7 +44,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
    - conversions
    - created_at
    - updated_at
-4. leads
+3. leads
    - id (uuid)
    - page_id
    - user_id
@@ -38,11 +52,20 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
    - name
    - metadata (JSON)
    - created_at
-5. email_sequences
+4. email_sequences
    - id (uuid)
    - user_id
    - name
    - steps (JSON)
    - active
+   - created_at
+5. custom_domains
+   - id (uuid)
+   - user_id
+   - domain
+   - status (pending|active|failed)
+   - verification_token
+   - verified_at
+   - ssl_certificate (JSON)
    - created_at
 */
