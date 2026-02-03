@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
+import QuickStartWizard from './QuickStartWizard'
 
 export default function Dashboard({ session }) {
   const [loading, setLoading] = useState(true)
@@ -7,9 +8,26 @@ export default function Dashboard({ session }) {
   const [leads, setLeads] = useState([])
   const [userPlan, setUserPlan] = useState('free')
   const [showWelcome, setShowWelcome] = useState(false)
+  const [showWizard, setShowWizard] = useState(false)
+  const [userProgress, setUserProgress] = useState({
+    firstPageCreated: false,
+    firstLeadCaptured: false,
+    pagesCreated: 0,
+    leadsCaptured: 0
+  })
 
   useEffect(() => {
     fetchData()
+    
+    // Load user progress from localStorage
+    const savedProgress = localStorage.getItem('leadgen_lite_user_progress')
+    if (savedProgress) {
+      try {
+        setUserProgress(JSON.parse(savedProgress))
+      } catch (err) {
+        console.error('Error parsing user progress:', err)
+      }
+    }
   }, [session])
 
   const fetchData = async () => {
@@ -59,26 +77,60 @@ export default function Dashboard({ session }) {
     }
   }
 
-  const createNewPage = async () => {
+  const createNewPage = async (pageData = null) => {
     try {
+      const pageTitle = pageData?.title || 'New Lead Page'
+      const template = pageData?.template || 'basic'
+      
       const { data, error } = await supabase
         .from('lead_pages')
         .insert([{
           user_id: session.user.id,
-          title: 'New Lead Page',
+          title: pageTitle,
           slug: `page-${Date.now()}`,
-          template: 'basic',
+          template: template,
           content: { blocks: [] },
-          published: false
+          published: false,
+          goal: pageData?.goal || 'email-list'
         }])
         .select()
         .single()
 
       if (error) throw error
+      
+      // Update user progress
+      const newProgress = {
+        ...userProgress,
+        firstPageCreated: true,
+        pagesCreated: userProgress.pagesCreated + 1
+      }
+      setUserProgress(newProgress)
+      localStorage.setItem('leadgen_lite_user_progress', JSON.stringify(newProgress))
+      
       setPages([data, ...pages])
+      
+      // Show success message
+      alert(`🎉 Success! Your page "${pageTitle}" has been created!`)
+      
+      return data
     } catch (error) {
       alert('Error creating page: ' + error.message)
+      return null
     }
+  }
+
+  const handleWizardComplete = async (pageData) => {
+    setShowWizard(false)
+    const createdPage = await createNewPage(pageData)
+    if (createdPage) {
+      // Track wizard completion
+      localStorage.setItem('leadgen_lite_wizard_completed', 'true')
+    }
+  }
+
+  const handleWizardSkip = () => {
+    setShowWizard(false)
+    createNewPage()
   }
 
   const getPlanLimits = () => {
@@ -184,6 +236,42 @@ export default function Dashboard({ session }) {
         </div>
       </div>
 
+      {/* User Progress (only show for new users) */}
+      {pages.length === 0 && !userProgress.firstPageCreated && (
+        <div style={{ 
+          backgroundColor: '#fff8e1',
+          border: '2px solid #ffd54f',
+          padding: '20px',
+          borderRadius: '10px',
+          marginBottom: '30px',
+          textAlign: 'center'
+        }}>
+          <h3 style={{ margin: '0 0 15px 0', color: '#e65100' }}>🎯 Your First Lead Page Awaits!</h3>
+          <p style={{ color: '#666', marginBottom: '20px' }}>
+            <strong>Complete your onboarding:</strong> Create your first page → Customize → Publish → Capture leads!
+          </p>
+          <div style={{
+            width: '100%',
+            height: '10px',
+            backgroundColor: '#ffeaa7',
+            borderRadius: '5px',
+            overflow: 'hidden',
+            marginBottom: '15px'
+          }}>
+            <div style={{
+              width: '25%',
+              height: '100%',
+              backgroundColor: '#fdcb6e',
+              borderRadius: '5px',
+              transition: 'width 0.5s ease'
+            }}></div>
+          </div>
+          <div style={{ fontSize: '14px', color: '#666' }}>
+            Progress: 25% (Step 1 of 4)
+          </div>
+        </div>
+      )}
+
       {/* Stats Overview */}
       <div style={{ 
         display: 'grid', 
@@ -202,6 +290,11 @@ export default function Dashboard({ session }) {
           <div style={{ fontSize: '14px', color: '#666' }}>
             {planLimits.pages === Infinity ? 'Unlimited' : `${pages.length}/${planLimits.pages}`}
           </div>
+          {pages.length === 0 && (
+            <div style={{ fontSize: '12px', color: '#28a745', marginTop: '5px' }}>
+              ⚡ Create your first page to get started!
+            </div>
+          )}
         </div>
 
         <div style={{ 
@@ -258,7 +351,15 @@ export default function Dashboard({ session }) {
         <h3 style={{ marginTop: 0 }}>Quick Actions</h3>
         <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
           <button
-            onClick={createNewPage}
+            onClick={() => {
+              // Check if user has completed wizard before
+              const hasCompletedWizard = localStorage.getItem('leadgen_lite_wizard_completed')
+              if (!hasCompletedWizard && pages.length === 0) {
+                setShowWizard(true)
+              } else {
+                createNewPage()
+              }
+            }}
             disabled={pages.length >= planLimits.pages && planLimits.pages !== Infinity}
             style={{
               padding: '12px 24px',
@@ -270,7 +371,7 @@ export default function Dashboard({ session }) {
               opacity: pages.length >= planLimits.pages && planLimits.pages !== Infinity ? 0.5 : 1
             }}
           >
-            + Create New Lead Page
+            {pages.length === 0 ? '🚀 Create First Lead Page' : '+ Create New Lead Page'}
           </button>
           
           <button
@@ -378,7 +479,14 @@ export default function Dashboard({ session }) {
             
             <div>
               <button
-                onClick={createNewPage}
+                onClick={() => {
+                  const hasCompletedWizard = localStorage.getItem('leadgen_lite_wizard_completed')
+                  if (!hasCompletedWizard) {
+                    setShowWizard(true)
+                  } else {
+                    createNewPage()
+                  }
+                }}
                 style={{
                   padding: '15px 40px',
                   backgroundColor: '#007bff',
@@ -685,6 +793,14 @@ export default function Dashboard({ session }) {
             </div>
           </div>
         </div>
+      )}
+      
+      {/* Quick Start Wizard */}
+      {showWizard && (
+        <QuickStartWizard
+          onComplete={handleWizardComplete}
+          onSkip={handleWizardSkip}
+        />
       )}
     </div>
   )
