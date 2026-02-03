@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import QuickStartWizard from './QuickStartWizard'
+import MagicPageGenerator from '../utils/magicPageGenerator'
 
 export default function Dashboard({ session }) {
   const [loading, setLoading] = useState(true)
@@ -60,9 +61,18 @@ export default function Dashboard({ session }) {
       setUserPlan(subscriptionData?.plan || 'free')
       setLoading(false)
       
-      // Show welcome message for first-time users (no pages yet)
+      // LAZY ONBOARDING: Auto-create magic page for new users
       if (!pagesData || pagesData.length === 0) {
-        // Check if we've shown welcome before
+        // Check if magic page already created
+        const magicPageCreated = localStorage.getItem('leadgen_lite_magic_page_created')
+        if (!magicPageCreated && session?.user?.email) {
+          // Auto-create magic page after short delay
+          setTimeout(async () => {
+            await createMagicPage(session.user.email)
+          }, 500)
+        }
+        
+        // Show welcome message
         const hasSeenWelcome = localStorage.getItem('leadgen_lite_welcome_seen')
         if (!hasSeenWelcome) {
           setTimeout(() => {
@@ -131,6 +141,53 @@ export default function Dashboard({ session }) {
   const handleWizardSkip = () => {
     setShowWizard(false)
     createNewPage()
+  }
+
+  // Create magic page automatically for lazy users
+  const createMagicPage = async (email) => {
+    try {
+      // Generate magic page data
+      const magicPage = MagicPageGenerator.generateMagicPage(email)
+      
+      const { data, error } = await supabase
+        .from('lead_pages')
+        .insert([{
+          user_id: session.user.id,
+          title: magicPage.title,
+          slug: magicPage.slug,
+          template: magicPage.template,
+          content: magicPage.content,
+          published: magicPage.published,
+          published_at: magicPage.published_at,
+          goal: magicPage.goal
+        }])
+        .select()
+        .single()
+
+      if (error) throw error
+      
+      // Update state
+      setPages([data, ...pages])
+      
+      // Mark as created
+      localStorage.setItem('leadgen_lite_magic_page_created', 'true')
+      
+      // Update user progress
+      const newProgress = {
+        ...userProgress,
+        firstPageCreated: true,
+        pagesCreated: userProgress.pagesCreated + 1
+      }
+      setUserProgress(newProgress)
+      localStorage.setItem('leadgen_lite_user_progress', JSON.stringify(newProgress))
+      
+      console.log('🎉 Magic page created automatically:', magicPage.title)
+      
+      return data
+    } catch (error) {
+      console.error('Error creating magic page:', error)
+      return null
+    }
   }
 
   const getPlanLimits = () => {
@@ -236,8 +293,93 @@ export default function Dashboard({ session }) {
         </div>
       </div>
 
-      {/* User Progress (only show for new users) */}
-      {pages.length === 0 && !userProgress.firstPageCreated && (
+      {/* LAZY USER DASHBOARD - Different views based on state */}
+      
+      {/* View 1: Magic page was auto-created (SUPER LAZY) */}
+      {pages.length > 0 && localStorage.getItem('leadgen_lite_magic_page_created') && (
+        <div style={{ 
+          backgroundColor: '#d4edda',
+          border: '2px solid #c3e6cb',
+          padding: '25px',
+          borderRadius: '10px',
+          marginBottom: '30px',
+          textAlign: 'center'
+        }}>
+          <div style={{ fontSize: '48px', marginBottom: '15px' }}>🎉</div>
+          <h3 style={{ margin: '0 0 10px 0', color: '#155724' }}>Your Lead Page is LIVE!</h3>
+          <p style={{ color: '#0c5460', marginBottom: '20px', fontSize: '16px' }}>
+            <strong>We created "{pages[0]?.title}" for you automatically!</strong> It's already published and ready to capture leads.
+          </p>
+          
+          <div style={{ 
+            backgroundColor: 'white', 
+            padding: '20px', 
+            borderRadius: '8px',
+            marginBottom: '20px',
+            textAlign: 'left'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+              <div>
+                <div style={{ fontWeight: '600', fontSize: '18px' }}>{pages[0]?.title}</div>
+                <div style={{ color: '#666', fontSize: '14px' }}>Template: {pages[0]?.template}</div>
+              </div>
+              <span style={{
+                padding: '4px 12px',
+                borderRadius: '20px',
+                fontSize: '12px',
+                fontWeight: '600',
+                backgroundColor: '#d4edda',
+                color: '#155724'
+              }}>
+                ✅ Published
+              </span>
+            </div>
+            
+            <div style={{ marginTop: '15px' }}>
+              <div style={{ fontSize: '14px', color: '#666', marginBottom: '8px' }}>Your page URL:</div>
+              <div style={{
+                backgroundColor: '#f8f9fa',
+                padding: '12px',
+                borderRadius: '6px',
+                fontFamily: 'monospace',
+                fontSize: '14px',
+                wordBreak: 'break-all',
+                marginBottom: '15px'
+              }}>
+                https://leadgenlite.com/{pages[0]?.slug}
+              </div>
+              
+              <button
+                onClick={() => {
+                  const url = `https://leadgenlite.com/${pages[0]?.slug}`
+                  navigator.clipboard.writeText(url)
+                  alert('✅ Link copied to clipboard! Share it anywhere.')
+                }}
+                style={{
+                  padding: '12px 24px',
+                  backgroundColor: '#28a745',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '15px',
+                  fontWeight: '600',
+                  width: '100%'
+                }}
+              >
+                📋 Copy Link to Share
+              </button>
+            </div>
+          </div>
+          
+          <p style={{ color: '#666', fontSize: '14px' }}>
+            <strong>Next:</strong> Share this link in emails, social media, or ads to start capturing leads!
+          </p>
+        </div>
+      )}
+      
+      {/* View 2: No pages yet (needs lazy push) */}
+      {pages.length === 0 && !localStorage.getItem('leadgen_lite_magic_page_created') && (
         <div style={{ 
           backgroundColor: '#fff8e1',
           border: '2px solid #ffd54f',
@@ -248,26 +390,28 @@ export default function Dashboard({ session }) {
         }}>
           <h3 style={{ margin: '0 0 15px 0', color: '#e65100' }}>🎯 Your First Lead Page Awaits!</h3>
           <p style={{ color: '#666', marginBottom: '20px' }}>
-            <strong>Complete your onboarding:</strong> Create your first page → Customize → Publish → Capture leads!
+            <strong>Too lazy to create one?</strong> Click below and we'll build it for you automatically!
           </p>
-          <div style={{
-            width: '100%',
-            height: '10px',
-            backgroundColor: '#ffeaa7',
-            borderRadius: '5px',
-            overflow: 'hidden',
-            marginBottom: '15px'
-          }}>
-            <div style={{
-              width: '25%',
-              height: '100%',
-              backgroundColor: '#fdcb6e',
-              borderRadius: '5px',
-              transition: 'width 0.5s ease'
-            }}></div>
-          </div>
+          
+          <button
+            onClick={() => createMagicPage(session.user.email)}
+            style={{
+              padding: '15px 30px',
+              backgroundColor: '#ffc107',
+              color: '#212529',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '16px',
+              fontWeight: '600',
+              marginBottom: '15px'
+            }}
+          >
+            🪄 Create Magic Page For Me
+          </button>
+          
           <div style={{ fontSize: '14px', color: '#666' }}>
-            Progress: 25% (Step 1 of 4)
+            We'll generate a high-converting page based on your email. Zero effort required!
           </div>
         </div>
       )}
@@ -352,12 +496,17 @@ export default function Dashboard({ session }) {
         <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
           <button
             onClick={() => {
-              // Check if user has completed wizard before
-              const hasCompletedWizard = localStorage.getItem('leadgen_lite_wizard_completed')
-              if (!hasCompletedWizard && pages.length === 0) {
-                setShowWizard(true)
+              // LAZY MODE: Auto-create based on email
+              if (pages.length === 0) {
+                createMagicPage(session.user.email)
               } else {
-                createNewPage()
+                // Check if user wants wizard or quick create
+                const hasCompletedWizard = localStorage.getItem('leadgen_lite_wizard_completed')
+                if (!hasCompletedWizard) {
+                  setShowWizard(true)
+                } else {
+                  createNewPage()
+                }
               }
             }}
             disabled={pages.length >= planLimits.pages && planLimits.pages !== Infinity}
@@ -371,7 +520,7 @@ export default function Dashboard({ session }) {
               opacity: pages.length >= planLimits.pages && planLimits.pages !== Infinity ? 0.5 : 1
             }}
           >
-            {pages.length === 0 ? '🚀 Create First Lead Page' : '+ Create New Lead Page'}
+            {pages.length === 0 ? '🪄 Create Magic Page (Zero Effort)' : '+ Create New Page'}
           </button>
           
           <button

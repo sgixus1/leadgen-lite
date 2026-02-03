@@ -99,9 +99,33 @@ export default function Auth() {
           </div>
 
           <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>
-              Password
-            </label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
+              <label style={{ fontWeight: '500' }}>
+                Password
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  // Generate strong random password
+                  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*'
+                  let generated = ''
+                  for (let i = 0; i < 12; i++) {
+                    generated += chars.charAt(Math.floor(Math.random() * chars.length))
+                  }
+                  setPassword(generated)
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#007bff',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  padding: '0'
+                }}
+              >
+                🔐 Generate secure password
+              </button>
+            </div>
             <input
               type="password"
               value={password}
@@ -114,8 +138,13 @@ export default function Auth() {
                 borderRadius: '5px',
                 fontSize: '16px'
               }}
-              placeholder="••••••••"
+              placeholder="Click button to generate secure password"
             />
+            {password && (
+              <div style={{ fontSize: '12px', color: '#28a745', marginTop: '5px' }}>
+                ✅ Password generated: {password.replace(/./g, '•')}
+              </div>
+            )}
           </div>
 
           <button
