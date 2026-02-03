@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LeadGen Lite - Page Not Found</title>
+    <script>
+        // Redirect to main app for SPA routing
+        sessionStorage.redirect = location.href;
+        location.replace('/leadgen-lite/');
+    </script>
+</head>
+<body>
+    <noscript>
+        <h1>Page Not Found</h1>
+        <p>Please enable JavaScript to use this application.</p>
+        <p><a href="/leadgen-lite/">Go to homepage</a></p>
+    </noscript>
+</body>
+</html>
