@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GEN Debug Bookmarklet - "If we can't find it, we build it"</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        h1 { color: #333; }
+        .bookmarklet { 
+            background: #f0f0f0; 
+            padding: 15px; 
+            border-radius: 5px; 
+            margin: 20px 0;
+            font-family: monospace;
+            word-break: break-all;
+        }
+        .step { margin: 15px 0; padding-left: 20px; border-left: 3px solid #007bff; }
+        .test-area { background: #e8f4f8; padding: 20px; border-radius: 5px; margin: 20px 0; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>🔧 GEN Debug Bookmarklet</h1>
+    <p><strong>Our slogan:</strong> <em>"If we can't find it, we build it"</em></p>
+    
+    <div class="bookmarklet">
+        <strong>Drag this to your bookmarks bar:</strong><br>
+        <a href="javascript:(function(){var d=document,s=d.createElement('script');s.src='https://sgixus1.github.io/leadgen-lite/debug.js?'+Date.now();d.body.appendChild(s);})();">🔍 GEN Debug</a>
+    </div>
+    
+    <div class="step">
+        <h3>📖 How to use:</h3>
+        <ol>
+            <li>Drag the link above to your bookmarks bar</li>
+            <li>Go to any website (including our app)</li>
+            <li>Click the "GEN Debug" bookmarklet</li>
+            <li>See debug information appear on screen</li>
+        </ol>
+    </div>
+    
+    <div class="step">
+        <h3>🔍 What it shows:</h3>
+        <ul>
+            <li>Browser information</li>
+            <li>Screen/viewport size</li>
+            <li>JavaScript console errors</li>
+            <li>localStorage/sessionStorage status</li>
+            <li>Network information</li>
+            <li>Page performance metrics</li>
+        </ul>
+    </div>
+    
+    <div class="test-area">
+        <h3>🧪 Test it here first:</h3>
+        <p>Click the button below to test the debug script on this page:</p>
+        <button onclick="runDebug()">Test Debug Script</button>
+        <div id="debug-output" style="margin-top: 15px; padding: 15px; background: white; border-radius: 5px; display: none;"></div>
+    </div>
+    
+    <div class="step">
+        <h3>🎯 Use on our app:</h3>
+        <p>Go to <a href="https://sgixus1.github.io/leadgen-lite/" target="_blank">LeadGen Lite</a>, click the bookmarklet, and see what's working or broken.</p>
+    </div>
+    
+    <script>
+        // Debug script
+        function runDebug() {
+            var output = document.getElementById('debug-output');
+            output.style.display = 'block';
+            output.innerHTML = '<h4>🔍 Debug Information:</h4>';
+            
+            // Collect info
+            var info = [
+                '<strong>Browser:</strong> ' + navigator.userAgent,
+                '<strong>Platform:</strong> ' + navigator.platform,
+                '<strong>Screen:</strong> ' + screen.width + 'x' + screen.height,
+                '<strong>Viewport:</strong> ' + window.innerWidth + 'x' + window.innerHeight,
+                '<strong>Device Pixel Ratio:</strong> ' + window.devicePixelRatio,
+                '<strong>localStorage:</strong> ' + (typeof localStorage !== 'undefined' ? 'Available' : 'Not available'),
+                '<strong>sessionStorage:</strong> ' + (typeof sessionStorage !== 'undefined' ? 'Available' : 'Not available'),
+                '<strong>Cookies:</strong> ' + (navigator.cookieEnabled ? 'Enabled' : 'Disabled'),
+                '<strong>JavaScript:</strong> Enabled',
+                '<strong>Online:</strong> ' + navigator.onLine,
+                '<strong>Page URL:</strong> ' + window.location.href,
+                '<strong>Page Title:</strong> ' + document.title
+            ];
+            
+            output.innerHTML += '<ul><li>' + info.join('</li><li>') + '</li></ul>';
+            
+            // Check for console errors (simulated)
+            output.innerHTML += '<h4>⚠️ Simulated Console Check:</h4>';
+            output.innerHTML += '<p>On a real page, this would show JavaScript errors from the console.</p>';
+            
+            // Add test buttons
+            output.innerHTML += '<h4>🧪 Quick Tests:</h4>';
+            output.innerHTML += '<button onclick="testLocalStorage()">Test localStorage</button> ';
+            output.innerHTML += '<button onclick="testSessionStorage()">Test sessionStorage</button> ';
+            output.innerHTML += '<button onclick="testJavaScript()">Test JavaScript</button>';
+            
+            output.innerHTML += '<div id="test-results" style="margin-top: 10px;"></div>';
+        }
+        
+        function testLocalStorage() {
+            try {
+                localStorage.setItem('debug_test', 'working');
+                var result = localStorage.getItem('debug_test');
+                localStorage.removeItem('debug_test');
+                document.getElementById('test-results').innerHTML = 
+                    '<p style="color: green;">✅ localStorage test: ' + result + '</p>';
+            } catch(e) {
+                document.getElementById('test-results').innerHTML = 
+                    '<p style="color: red;">❌ localStorage test failed: ' + e.message + '</p>';
+            }
+        }
+        
+        function testSessionStorage() {
+            try {
+                sessionStorage.setItem('debug_test', 'working');
+                var result = sessionStorage.getItem('debug_test');
+                sessionStorage.removeItem('debug_test');
+                document.getElementById('test-results').innerHTML = 
+                    '<p style="color: green;">✅ sessionStorage test: ' + result + '</p>';
+            } catch(e) {
+                document.getElementById('test-results').innerHTML = 
+                    '<p style="color: red;">❌ sessionStorage test failed: ' + e.message + '</p>';
+            }
+        }
+        
+        function testJavaScript() {
+            document.getElementById('test-results').innerHTML = 
+                '<p style="color: green;">✅ JavaScript is executing properly</p>';
+        }
+    </script>
+</body>
+</html>
