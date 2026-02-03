@@ -128,6 +128,39 @@ export const demoAuth = {
     return { error: null }
   },
   
+  // Reset password (demo version)
+  resetPasswordForEmail: async (email) => {
+    // In real app, this would send an email
+    // For demo, we'll just log it
+    console.log(`Password reset requested for: ${email}`)
+    
+    // Get users
+    const usersStr = localStorage.getItem(DEMO_USERS_KEY) || '{}'
+    const users = JSON.parse(usersStr)
+    
+    if (!users[email]) {
+      throw new Error('User not found')
+    }
+    
+    // In real app: Send email with reset link
+    // For demo: Return success
+    return {
+      data: {},
+      error: null
+    }
+  },
+  
+  // Update password (demo version)
+  updateUser: async (attributes) => {
+    // For demo, we don't actually update anything
+    // In real app, this would update user in database
+    console.log('User update requested:', attributes)
+    return {
+      data: { user: null },
+      error: null
+    }
+  },
+  
   // Mock Supabase client methods
   auth: {
     getSession: () => demoAuth.getSession(),

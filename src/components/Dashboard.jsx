@@ -6,6 +6,7 @@ export default function Dashboard({ session }) {
   const [pages, setPages] = useState([])
   const [leads, setLeads] = useState([])
   const [userPlan, setUserPlan] = useState('free')
+  const [showWelcome, setShowWelcome] = useState(false)
 
   useEffect(() => {
     fetchData()
@@ -40,6 +41,18 @@ export default function Dashboard({ session }) {
       setLeads(leadsData || [])
       setUserPlan(subscriptionData?.plan || 'free')
       setLoading(false)
+      
+      // Show welcome message for first-time users (no pages yet)
+      if (!pagesData || pagesData.length === 0) {
+        // Check if we've shown welcome before
+        const hasSeenWelcome = localStorage.getItem('leadgen_lite_welcome_seen')
+        if (!hasSeenWelcome) {
+          setTimeout(() => {
+            setShowWelcome(true)
+            localStorage.setItem('leadgen_lite_welcome_seen', 'true')
+          }, 1000)
+        }
+      }
     } catch (error) {
       console.error('Error fetching data:', error)
       setLoading(false)
@@ -82,8 +95,46 @@ export default function Dashboard({ session }) {
 
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', padding: '50px' }}>
-        <div style={{ fontSize: '24px', color: '#666' }}>Loading your dashboard...</div>
+      <div style={{ 
+        textAlign: 'center', 
+        padding: '80px 20px',
+        maxWidth: '600px',
+        margin: '0 auto'
+      }}>
+        <div style={{ 
+          fontSize: '48px', 
+          marginBottom: '20px',
+          animation: 'pulse 1.5s infinite'
+        }}>⚡</div>
+        <h3 style={{ margin: '0 0 15px 0', color: '#212529' }}>Preparing Your Command Center</h3>
+        <p style={{ color: '#666', marginBottom: '30px' }}>
+          Loading your lead pages, analytics, and growth tools...
+        </p>
+        <div style={{
+          width: '100%',
+          height: '6px',
+          backgroundColor: '#e9ecef',
+          borderRadius: '3px',
+          overflow: 'hidden'
+        }}>
+          <div style={{
+            width: '60%',
+            height: '100%',
+            backgroundColor: '#007bff',
+            borderRadius: '3px',
+            animation: 'loading 1.5s ease-in-out infinite'
+          }}></div>
+        </div>
+        <style>{`
+          @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+          }
+          @keyframes loading {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(250%); }
+          }
+        `}</style>
       </div>
     )
   }
@@ -289,29 +340,63 @@ export default function Dashboard({ session }) {
         {pages.length === 0 ? (
           <div style={{ 
             backgroundColor: 'white', 
-            padding: '40px', 
+            padding: '50px 30px', 
             textAlign: 'center',
             borderRadius: '10px',
-            boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+            boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+            border: '2px dashed #e9ecef'
           }}>
-            <div style={{ fontSize: '24px', marginBottom: '10px' }}>📄</div>
-            <h4 style={{ margin: '0 0 10px 0' }}>No lead pages yet</h4>
-            <p style={{ color: '#666', marginBottom: '20px' }}>
-              Create your first lead page to start capturing leads
+            <div style={{ fontSize: '48px', marginBottom: '20px' }}>🚀</div>
+            <h3 style={{ margin: '0 0 15px 0', color: '#212529' }}>Welcome to Your Lead Generation Hub!</h3>
+            <p style={{ color: '#666', marginBottom: '25px', fontSize: '16px', maxWidth: '600px', margin: '0 auto 25px' }}>
+              <strong>You're 3 minutes away from capturing your first lead!</strong> Create a high-converting page, share the link, and watch leads roll in.
             </p>
-            <button
-              onClick={createNewPage}
-              style={{
-                padding: '12px 24px',
-                backgroundColor: '#007bff',
-                color: 'white',
-                border: 'none',
-                borderRadius: '5px',
-                cursor: 'pointer'
-              }}
-            >
-              Create Your First Page
-            </button>
+            
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+              gap: '20px', 
+              marginBottom: '30px',
+              textAlign: 'left'
+            }}>
+              <div style={{ padding: '15px', backgroundColor: '#f8f9fa', borderRadius: '8px' }}>
+                <div style={{ fontSize: '20px', marginBottom: '8px' }}>1️⃣</div>
+                <div style={{ fontWeight: '600', marginBottom: '5px' }}>Create Page</div>
+                <div style={{ fontSize: '14px', color: '#666' }}>Choose a template and customize</div>
+              </div>
+              <div style={{ padding: '15px', backgroundColor: '#f8f9fa', borderRadius: '8px' }}>
+                <div style={{ fontSize: '20px', marginBottom: '8px' }}>2️⃣</div>
+                <div style={{ fontWeight: '600', marginBottom: '5px' }}>Share Link</div>
+                <div style={{ fontSize: '14px', color: '#666' }}>Add to emails, social media, ads</div>
+              </div>
+              <div style={{ padding: '15px', backgroundColor: '#f8f9fa', borderRadius: '8px' }}>
+                <div style={{ fontSize: '20px', marginBottom: '8px' }}>3️⃣</div>
+                <div style={{ fontWeight: '600', marginBottom: '5px' }}>Capture Leads</div>
+                <div style={{ fontSize: '14px', color: '#666' }}>Emails automatically saved here</div>
+              </div>
+            </div>
+            
+            <div>
+              <button
+                onClick={createNewPage}
+                style={{
+                  padding: '15px 40px',
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  boxShadow: '0 4px 15px rgba(0,123,255,0.3)'
+                }}
+              >
+                🚀 Launch Your First Lead Page
+              </button>
+              <p style={{ marginTop: '15px', color: '#666', fontSize: '14px' }}>
+                <strong>Free plan includes:</strong> 1 page • 100 leads/month • Basic templates
+              </p>
+            </div>
           </div>
         ) : (
           <div style={{ 
@@ -446,6 +531,158 @@ export default function Dashboard({ session }) {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+      
+      {/* Welcome Modal for First-Time Users */}
+      {showWelcome && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '20px'
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '40px',
+            maxWidth: '500px',
+            width: '100%',
+            boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
+            position: 'relative'
+          }}>
+            <button
+              onClick={() => setShowWelcome(false)}
+              style={{
+                position: 'absolute',
+                top: '15px',
+                right: '15px',
+                background: 'none',
+                border: 'none',
+                fontSize: '24px',
+                cursor: 'pointer',
+                color: '#666'
+              }}
+            >
+              ×
+            </button>
+            
+            <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+              <div style={{ fontSize: '48px', marginBottom: '20px' }}>🎉</div>
+              <h2 style={{ margin: '0 0 15px 0', color: '#212529' }}>Welcome to LeadGen Lite!</h2>
+              <p style={{ color: '#666', lineHeight: '1.6' }}>
+                You're about to start capturing leads like a pro. Here's how to get started in 3 simple steps:
+              </p>
+            </div>
+            
+            <div style={{ marginBottom: '30px' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '20px' }}>
+                <div style={{
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginRight: '15px',
+                  flexShrink: 0
+                }}>
+                  1
+                </div>
+                <div>
+                  <div style={{ fontWeight: '600', marginBottom: '5px' }}>Create Your First Lead Page</div>
+                  <div style={{ color: '#666', fontSize: '14px' }}>Click the "Create New Lead Page" button above</div>
+                </div>
+              </div>
+              
+              <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '20px' }}>
+                <div style={{
+                  backgroundColor: '#28a745',
+                  color: 'white',
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginRight: '15px',
+                  flexShrink: 0
+                }}>
+                  2
+                </div>
+                <div>
+                  <div style={{ fontWeight: '600', marginBottom: '5px' }}>Customize & Publish</div>
+                  <div style={{ color: '#666', fontSize: '14px' }}>Edit your page, then publish to get a shareable link</div>
+                </div>
+              </div>
+              
+              <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+                <div style={{
+                  backgroundColor: '#6f42c1',
+                  color: 'white',
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginRight: '15px',
+                  flexShrink: 0
+                }}>
+                  3
+                </div>
+                <div>
+                  <div style={{ fontWeight: '600', marginBottom: '5px' }}>Share & Capture Leads</div>
+                  <div style={{ color: '#666', fontSize: '14px' }}>Add the link to your emails, social media, or ads</div>
+                </div>
+              </div>
+            </div>
+            
+            <div style={{ textAlign: 'center' }}>
+              <button
+                onClick={() => {
+                  setShowWelcome(false)
+                  createNewPage()
+                }}
+                style={{
+                  padding: '15px 40px',
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  marginBottom: '15px'
+                }}
+              >
+                🚀 Create My First Page
+              </button>
+              <div>
+                <button
+                  onClick={() => setShowWelcome(false)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#666',
+                    cursor: 'pointer',
+                    fontSize: '14px'
+                  }}
+                >
+                  I'll explore first
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
