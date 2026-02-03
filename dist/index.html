@@ -10,10 +10,184 @@
     <meta property="og:title" content="LeadGen Lite - Stop Losing Leads">
     <meta property="og:description" content="Create beautiful lead pages that convert. No coding required. Start free.">
     <meta property="og:type" content="website">
-    <script type="module" crossorigin src="/leadgen-lite/assets/index-Cr-F7z_1.js"></script>
+    <script type="module" crossorigin src="/leadgen-lite/assets/index-ReMCCOPF.js"></script>
     <link rel="stylesheet" crossorigin href="/leadgen-lite/assets/index-zxTVT_ht.css">
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Loading screen that transforms if React fails -->
+      <div id="loading-screen" style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        font-family: Arial, sans-serif;
+        text-align: center;
+        padding: 20px;
+        z-index: 10000;
+        transition: opacity 0.5s ease;
+      ">
+        <div style="font-size: 48px; margin-bottom: 20px;">⚡</div>
+        <h1 style="margin: 0 0 15px 0; font-size: 28px;">LeadGen Lite</h1>
+        <p style="margin: 0 0 30px 0; opacity: 0.9; font-size: 16px;">Loading your lead generation platform...</p>
+        <div style="
+          width: 200px;
+          height: 4px;
+          background: rgba(255,255,255,0.2);
+          border-radius: 2px;
+          overflow: hidden;
+          margin-bottom: 30px;
+        ">
+          <div id="loading-bar" style="
+            width: 0%;
+            height: 100%;
+            background: white;
+            border-radius: 2px;
+            transition: width 0.3s ease;
+          "></div>
+        </div>
+        
+        <!-- Basic functionality that works without React -->
+        <div id="fallback-content" style="
+          display: none;
+          margin-top: 30px;
+          padding: 20px;
+          background: rgba(255,255,255,0.1);
+          border-radius: 10px;
+          font-size: 14px;
+          max-width: 400px;
+          text-align: left;
+        ">
+          <h3 style="margin-top: 0; color: white;">⚠️ Enhanced Loading</h3>
+          <p>Our app is taking longer to load. Here's what you can do:</p>
+          <ul style="margin: 10px 0; padding-left: 20px;">
+            <li><a href="?t=' + Date.now() + '" style="color: #ffd54f; text-decoration: none;">🔄 Refresh with cache bust</a></li>
+            <li><a href="/leadgen-lite/simple-test.html" style="color: #ffd54f; text-decoration: none;">🧪 Run diagnostic test</a></li>
+            <li><button onclick="showDebugInfo()" style="
+              background: transparent;
+              border: 1px solid rgba(255,255,255,0.3);
+              color: white;
+              padding: 8px 16px;
+              border-radius: 5px;
+              cursor: pointer;
+              margin-top: 10px;
+            ">🔍 Show Debug Info</button></li>
+          </ul>
+          
+          <div id="debug-info" style="
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+          "></div>
+        </div>
+      </div>
+    </div>
+    
+    
+    <script>
+      // Progressive enhancement: Basic functionality without React
+      let reactLoaded = false;
+      let loadTimeout = null;
+      
+      // Mark React as loaded (called from main.jsx after React mounts)
+      window.markReactLoaded = function() {
+        reactLoaded = true;
+        if (loadTimeout) clearTimeout(loadTimeout);
+        
+        // Fade out loading screen
+        const loadingScreen = document.getElementById('loading-screen');
+        if (loadingScreen) {
+          loadingScreen.style.opacity = '0';
+          setTimeout(() => {
+            loadingScreen.style.display = 'none';
+          }, 500);
+        }
+      };
+      
+      // Show fallback if React takes too long
+      loadTimeout = setTimeout(() => {
+        if (!reactLoaded) {
+          console.log('React loading timeout - showing fallback');
+          const fallback = document.getElementById('fallback-content');
+          const loadingBar = document.getElementById('loading-bar');
+          
+          if (fallback) fallback.style.display = 'block';
+          if (loadingBar) loadingBar.style.width = '100%';
+          
+          // Update loading text
+          const loadingText = document.querySelector('#loading-screen p');
+          if (loadingText) {
+            loadingText.textContent = 'Loading enhanced experience...';
+            loadingText.style.color = '#ffd54f';
+          }
+        }
+      }, 5000); // 5 second timeout
+      
+      // Animate loading bar
+      let loadProgress = 0;
+      const loadingBar = document.getElementById('loading-bar');
+      if (loadingBar) {
+        const animateLoad = () => {
+          if (loadProgress < 90 && !reactLoaded) {
+            loadProgress += Math.random() * 10;
+            loadingBar.style.width = loadProgress + '%';
+            setTimeout(animateLoad, 300);
+          }
+        };
+        animateLoad();
+      }
+      
+      // Debug info function
+      window.showDebugInfo = function() {
+        const debugEl = document.getElementById('debug-info');
+        if (debugEl) {
+          debugEl.style.display = 'block';
+          debugEl.innerHTML = `
+            <strong>Browser:</strong> ${navigator.userAgent}<br>
+            <strong>Screen:</strong> ${screen.width}x${screen.height}<br>
+            <strong>Viewport:</strong> ${window.innerWidth}x${window.innerHeight}<br>
+            <strong>localStorage:</strong> ${typeof localStorage !== 'undefined' ? 'Available' : 'Not available'}<br>
+            <strong>JavaScript:</strong> Enabled<br>
+            <strong>React Loaded:</strong> ${reactLoaded ? 'Yes' : 'No'}<br>
+            <strong>Page URL:</strong> ${window.location.href}
+          `;
+        }
+      };
+      
+      // Auto-call markReactLoaded after 10 seconds as safety
+      setTimeout(() => {
+        if (!reactLoaded) {
+          console.warn('React failed to load - forcing fallback mode');
+          window.markReactLoaded();
+        }
+      }, 10000);
+    </script>
+    
+    <style>
+      @keyframes pulse {
+        0% { opacity: 0.6; }
+        50% { opacity: 1; }
+        100% { opacity: 0.6; }
+      }
+      
+      #loading-screen h1 {
+        animation: pulse 2s ease-in-out infinite;
+      }
+      
+      a:hover {
+        text-decoration: underline !important;
+      }
+    </style>
   </body>
 </html>
