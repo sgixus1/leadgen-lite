@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error Test</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>Error Detection Test</h1>
+    
+    <div id="test1">
+        <p class="success">✅ Basic HTML working</p>
+    </div>
+    
+    <div id="test2">
+        <script>
+            try {
+                document.getElementById('test2').innerHTML = 
+                    '<p class="success">✅ JavaScript executing</p>';
+            } catch (err) {
+                document.getElementById('test2').innerHTML = 
+                    '<p class="error">❌ JavaScript error: ' + err.message + '</p>';
+            }
+        </script>
+    </div>
+    
+    <div id="test3">
+        <script>
+            // Test if React would load
+            try {
+                if (typeof React === 'undefined') {
+                    document.getElementById('test3').innerHTML = 
+                        '<p class="error">❌ React not loaded (expected on this page)</p>';
+                } else {
+                    document.getElementById('test3').innerHTML = 
+                        '<p class="success">✅ React available</p>';
+                }
+            } catch (err) {
+                document.getElementById('test3').innerHTML = 
+                    '<p class="error">❌ Error checking React: ' + err.message + '</p>';
+            }
+        </script>
+    </div>
+    
+    <div id="test4">
+        <script>
+            // Test loading our main app JavaScript
+            window.onerror = function(msg, url, line, col, error) {
+                document.getElementById('test4').innerHTML = 
+                    '<p class="error">❌ Global error: ' + msg + ' at ' + url + ':' + line + '</p>';
+                return false;
+            };
+            
+            // Try to load the main app script
+            setTimeout(function() {
+                document.getElementById('test4').innerHTML = 
+                    '<p class="success">✅ No global errors detected</p>';
+            }, 1000);
+        </script>
+    </div>
+    
+    <div style="margin-top: 30px;">
+        <h3>Debug Info:</h3>
+        <div id="debug"></div>
+        <script>
+            document.getElementById('debug').innerHTML = 
+                '<p>User Agent: ' + navigator.userAgent + '</p>' +
+                '<p>Screen: ' + screen.width + 'x' + screen.height + '</p>' +
+                '<p>Viewport: ' + window.innerWidth + 'x' + window.innerHeight + '</p>';
+        </script>
+    </div>
+</body>
+</html>
